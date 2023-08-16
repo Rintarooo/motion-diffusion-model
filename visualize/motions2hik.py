@@ -50,6 +50,8 @@ def motions2hik(motions,  device=0, cuda=True):
 
     nreps, njoints, nfeats, nframes = motions.shape
     j2s = joints2smpl(num_frames=nframes, device_id=device, cuda=cuda)
+    
+    translation = motions
 
     thetas = []
     root_translation = []
@@ -81,6 +83,7 @@ def motions2hik(motions,  device=0, cuda=True):
         'joint_map': JOINT_MAP,
         'thetas': thetas.tolist(),  # [nreps, nframes, njoints, 3 (deg)]
         'root_translation': root_translation.tolist(), # [nreps, nframes, 3 (xyz)]
+        'translation': translation.transpose(0,3,1,2).tolist() # [nreps, nframes, njoints, 3 (xyz)]
     }
 
     return data_dict

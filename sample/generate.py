@@ -18,6 +18,8 @@ from data_loaders.humanml.utils.plot_script import plot_3d_motion
 import shutil
 from data_loaders.tensors import collate
 
+import json
+from visualize.motions2hik import motions2hik
 
 def main():
     args = generate_args()
@@ -137,7 +139,16 @@ def main():
         sample = model.rot2xyz(x=sample, mask=rot2xyz_mask, pose_rep=rot2xyz_pose_rep, glob=True, translation=True,
                                jointstype='smpl', vertstrans=True, betas=None, beta=0, glob_rot=None,
                                get_rotations_back=False)
+        
+        
+        # data_dict = motions2hik(sample.cpu().numpy())
+        # json_path = os.path.join(out_path, 'motion_'+ str(rep_i) +'.json')
+        # with open(json_path, "w") as jw:
+        #     json.dump(data_dict, jw)#indent=2)
+        #     print(f"json dumped {json_path}")
 
+            
+        
         if args.unconstrained:
             all_text += ['unconstrained'] * args.num_samples
         else:
@@ -158,6 +169,18 @@ def main():
     if os.path.exists(out_path):
         shutil.rmtree(out_path)
     os.makedirs(out_path)
+
+    # for i in range(args.num_repetitions):
+    #     data_dict = motions2hik(all_motions[i])#.cpu().numpy())
+    #     json_path = os.path.join(out_path, './motion_'+ str(i) +'.json')
+    #     with open(json_path, "w") as jw:
+    #         json.dump(data_dict, jw)#indent=2)
+    #     print(f"json dumped {json_path}")
+    data_dict = motions2hik(all_motions)#.cpu().numpy())
+    json_path = os.path.join(out_path, './motion_humanik.json')
+    with open(json_path, "w") as jw:
+        json.dump(data_dict, jw)#indent=2)
+    print(f"json dumped {json_path}")
 
     npy_path = os.path.join(out_path, 'results.npy')
     print(f"saving results file to [{npy_path}]")
