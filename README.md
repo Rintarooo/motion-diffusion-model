@@ -443,3 +443,9 @@ that our code is based on:
 This code is distributed under an [MIT LICENSE](LICENSE).
 
 Note that our code depends on other libraries, including CLIP, SMPL, SMPL-X, PyTorch3D, and uses datasets that each have their own respective licenses that must also be followed.
+
+## Usage
+# VM上でビルド
+docker-compose -f .devcontainer/docker-compose.yml build motion-diffusion
+xhost local:root
+docker-compose -f .devcontainer/docker-compose.yml run --rm motion-diffusion /bin/bash
