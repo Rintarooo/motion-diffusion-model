@@ -4,7 +4,8 @@ ARG TORCH_VER=1.7.1
 ARG TORCH_VISON_VER=0.8.2
 ARG TORCH_AUDIO_VER=0.7.2
 ARG CUDA_VER=11.0.3
-ARG UBUNTU_VER=18.04
+ARG UBUNTU_VER=20.04
+# 18.04
 
 # check whether the base image exists in dockerhub repo
 # https://hub.docker.com/r/nvidia/cuda
@@ -39,27 +40,42 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1-mesa-glx \
     libglib2.0-0 \
     zlib1g-dev \
+    libssl-dev \
+    libffi-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python 
-RUN wget https://www.python.org/ftp/python/$PYTHON_VER/Python-$PYTHON_VER.tgz \
+ENV PYTHON_INSTALL_DIR /my_python/
+
+# Install Python
+RUN mkdir -p ${PYTHON_INSTALL_DIR} \
+    &&  cd ${PYTHON_INSTALL_DIR} \
+    &&  wget https://www.python.org/ftp/python/$PYTHON_VER/Python-$PYTHON_VER.tgz \
     &&  tar -xf Python-$PYTHON_VER.tgz \
-    &&  cd Python-$PYTHON_VER \
+    &&  rm Python-$PYTHON_VER.tgz \
+    &&  cd Python-$PYTHON_VER/ \
     &&  ./configure --enable-optimizations \
-    && make -j $(nproc) \
-    && make altinstall
+    &&  make -j$(nproc) \
+    &&  make install
+
+RUN ln -fs ${PYTHON_INSTALL_DIR}/Python-${PYTHON_VER}/python /usr/bin/python \
+    && curl -kL https://bootstrap.pypa.io/get-pip.py | python 
 
 # Install pip packages
-RUN ln -s /usr/bin/python${PYTHON_VER_NO_PERIODS} /usr/bin/python \
-    &&  pip install --upgrade pip \
-    &&  pip install torch==${TORCH_VER}+cu${CUDA_VER_NO_PERIODS} torchvision==${TORCH_VISON_VER}+cu${CUDA_VER_NO_PERIODS} torchaudio==${TORCH_AUDIO_VER} --index-url https://download.pytorch.org/whl/cu${CUDA_VER_NO_PERIODS} \
-    &&  pip install opencv-python numpy tqdm ninja trimesh matplotlib
+RUN pip install --upgrade pip setuptools wheel \
+    && pip install torch==${TORCH_VER}+cu${CUDA_VER_NO_PERIODS} torchvision==${TORCH_VISON_VER}+cu${CUDA_VER_NO_PERIODS} torchaudio==${TORCH_AUDIO_VER} --index-url https://download.pytorch.org/whl/cu${CUDA_VER_NO_PERIODS} \
+    && pip install opencv-python numpy tqdm ninja trimesh matplotlib
     # torch-2.0.1+cu117.with.pypi.cudnn-cp310-cp310-linux_x86_64.whl
     # pip install torch==${TORCH_VER}+cu${CUDA_VER_NO_PERIODS} torchvision==0.15.1+cu{CUDA_VER_NO_PERIODS} --index-url https://download.pytorch.org/whl/cu117 \
     # pip install torch torchvision \
 
-RUN python -m spacy download en_core_web_sm \
+# RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
+#     # libffi-devel \
+#     libffi-dev \
+# #     && pip install ftfy regex spacy \
+# RUN apt install libffi-dev \
+RUN pip install ftfy regex spacy \
+    && python -m spacy download en_core_web_sm \
     && pip install git+https://github.com/openai/CLIP.git
 
 
@@ -83,15 +99,22 @@ RUN python -m spacy download en_core_web_sm \
 
 
 # # https://qiita.com/junkor-1011/items/cd7c0e626aedc335011d
-# # ローカルuser作成
-# # ARG USER_NAME=user
-# # ARG USER_UID=1000
-# # ARG PASSWD=password
-# # RUN useradd -m -s /bin/bash -u ${USER_UID} ${USER_NAME} && \
-# #     gpasswd -a ${USER_NAME} sudo && \
-# #     echo "${USER_NAME}:${PASSWD}" | chpasswd && \
-# #     echo "${USER_NAME} ALL=(ALL) ALL" >> /etc/sudoers && \
-# #     chmod g+w /etc/passwd
+
+# https://qiita.com/Spritaro/items/602118d946a4383bd2bb
+# ローカルuser作成
+ARG USER_NAME=user
+ARG GROUP_NAME=user
+ARG UID=1000
+ARG GID=1000
+ARG PIN=password
+RUN groupadd -g $GID $GROUP_NAME \
+    && useradd -m -s /bin/bash -u $UID -g $GID -G sudo $USER_NAME \
+    && gpasswd -a $USER_NAME sudo \
+    && echo "${USER_NAME}:${PIN}" | chpasswd \
+    && echo "${USER_NAME} ALL=(ALL) ALL" >> /etc/sudoers \
+    && chmod g+w /etc/passwd
+USER $USER_NAME
+
 
 
 # # conda用準備
