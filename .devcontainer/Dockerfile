@@ -42,6 +42,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zlib1g-dev \
     libssl-dev \
     libffi-dev \
+    liblzma-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -78,6 +79,9 @@ RUN pip install ftfy regex spacy \
     && python -m spacy download en_core_web_sm \
     && pip install git+https://github.com/openai/CLIP.git
 
+# Install ffmpeg
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg
 
 # # requirements.txtの場合
 # # COPY requirements.txt ${WORK_DIR}
@@ -115,8 +119,8 @@ RUN groupadd -g $GID $GROUP_NAME \
     && chmod g+w /etc/passwd
 USER $USER_NAME
 
-
-
+RUN pip install chumpy smplx scipy h5py
+RUN pip install -U matplotlib==3.1.3
 # # conda用準備
 # ENV CONDA_DIR=/opt/conda \
 #     CONDA_TMP_DIR=/tmp/conda \

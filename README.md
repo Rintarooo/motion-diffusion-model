@@ -444,8 +444,28 @@ This code is distributed under an [MIT LICENSE](LICENSE).
 
 Note that our code depends on other libraries, including CLIP, SMPL, SMPL-X, PyTorch3D, and uses datasets that each have their own respective licenses that must also be followed.
 
-## Usage
-# VM上でビルド
+# Usage
+## VM上でビルド
+```bash
 docker-compose -f .devcontainer/docker-compose.yml build motion-diffusion
-xhost local:root
+<!-- xhost local:root -->
+# download pretrained weights
+./get_pretained.sh
+cd save/ && unzip humanml_trans_enc_512.zip && cd ../
+
+# this follows README.md above
+cd ..
+git clone https://github.com/EricGuo5513/HumanML3D.git
+unzip ./HumanML3D/HumanML3D/texts.zip -d ./HumanML3D/HumanML3D/
+cp -r HumanML3D/HumanML3D motion-diffusion-model/dataset/HumanML3D
+cd motion-diffusion-model
+
 docker-compose -f .devcontainer/docker-compose.yml run --rm motion-diffusion /bin/bash
+
+# this follows README.md above
+bash prepare/download_smpl_files.sh
+bash prepare/download_glove.sh
+bash prepare/download_t2m_evaluators.sh
+
+
+```
